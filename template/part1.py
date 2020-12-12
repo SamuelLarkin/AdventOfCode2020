@@ -1,14 +1,17 @@
 #!/usr/bin/env  python3
 
 from pathlib import Path
-from typing import Sequence
+from typing import (
+        Iterable,
+        Sequence,
+        )
 
 
-def parse_input(line: str) -> int:
+def parse_input(lines: str) -> int:
     """
     Convert one line of the puzzle's data.
     """
-    return int(line.strip())
+    return tuple(tuple(int(v) for v in line.strip().split()) for line in lines)
 
 
 def load_input(input_fn: Path = Path('input')):
@@ -16,7 +19,7 @@ def load_input(input_fn: Path = Path('input')):
     Load the puzzle's data.
     """
     with input_fn.open('r') as input_f:
-        return list(map(parse_input, input_f))
+        return parse_input(input_f)
 
 
 def solve(data: Sequence[int]) -> int:
