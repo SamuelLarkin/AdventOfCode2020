@@ -1,9 +1,17 @@
 #!/usr/bin/env  python3
 
 
-from part1 import load_input
+from part1 import (
+        load_input,
+        )
 from pathlib import Path
-from typing import Sequence
+from typing import (
+        Iterable,
+        Mapping,
+        Sequence,
+        Set,
+        Tuple,
+        )
 
 
 def solve(data: Sequence[int]) -> int:

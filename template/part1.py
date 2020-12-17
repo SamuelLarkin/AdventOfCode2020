@@ -1,13 +1,22 @@
 #!/usr/bin/env  python3
 
+from collections import (
+        defaultdict,
+        )
+from itertools import (
+        chain,
+        )
 from pathlib import Path
 from typing import (
         Iterable,
+        Mapping,
         Sequence,
+        Set,
+        Tuple,
         )
 
 
-def parse_input(lines: str) -> int:
+def parse_input(lines: Iterable[str]):
     """
     Convert one line of the puzzle's data.
     """
