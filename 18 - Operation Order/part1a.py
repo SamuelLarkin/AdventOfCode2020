@@ -7,6 +7,10 @@ from itertools import (
         chain,
         )
 from pathlib import Path
+from shunting_yard import (
+        evaluate_reversed_polish_notation,
+        shunting_yard_for_part1 as shunting_yard,
+        )
 from typing import (
         Iterable,
         Iterator,
@@ -37,48 +41,12 @@ def load_input(input_fn: Path = Path('input')):
 
 
 
-def operate(lvalue: int, rvalue: int, op: str) -> int:
-    """
-    Applies the operation.
-    """
-    if op == '+':
-        return rvalue + lvalue
-    elif op == '*':
-        return rvalue * lvalue
-    else:
-        raise Exception('No op')
-
-
-
-def calculate(data: Tuple, total: int = 0) -> int:
-    """
-    Evaluate the expression from left-to-right where '+' & '*' have the same precedence.
-    """
-    last_op = '+'
-    total = 0
-    value = None
-    while len(data) > 0:
-        c = data.pop(0)
-        if c == '(':
-            value = calculate(data)
-            total = operate(total, value, last_op)
-        elif c == ')':
-            return total
-        elif c in ('+', '*'):
-            last_op = c
-        else:
-            value = int(c)
-            total = operate(total, value, last_op)
-
-    return total
-
-
-
 def solve(expressions: Sequence[str]) -> int:
     """
     Solve part 1 of the puzzle.
     """
-    evaluated = map(calculate, expressions)
+    parsed    = map(shunting_yard, expressions)
+    evaluated = map(evaluate_reversed_polish_notation, parsed)
 
     return sum(evaluated)
 

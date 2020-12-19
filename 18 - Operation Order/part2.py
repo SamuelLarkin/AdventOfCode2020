@@ -73,11 +73,11 @@ def parse(lexed) -> int:
 
 
 
-def solve(data: Sequence[int]) -> int:
+def solve(expressions: Sequence[int]) -> int:
     """
     Solve part 2 of the puzzle.
     """
-    lexed = map(lexer, data)
+    lexed = map(lexer, expressions)
     solved = map(parse, lexed)
 
     return sum(solved)
