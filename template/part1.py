@@ -16,11 +16,13 @@ from typing import (
         )
 
 
+
 def parse_input(lines: Iterable[str]):
     """
     Convert one line of the puzzle's data.
     """
     return tuple(tuple(int(v) for v in line.strip().split()) for line in lines)
+
 
 
 def load_input(input_fn: Path = Path('input')):
@@ -29,6 +31,7 @@ def load_input(input_fn: Path = Path('input')):
     """
     with input_fn.open('r') as input_f:
         return parse_input(input_f)
+
 
 
 def solve(data: Sequence[int]) -> int:
@@ -48,4 +51,5 @@ if __name__ == '__main__':
 
     answer = solve(data)
 
+    # 
     print(f'Answer: {answer}')
