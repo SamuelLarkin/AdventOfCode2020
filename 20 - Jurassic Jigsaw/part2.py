@@ -250,27 +250,85 @@ def arrange_tile2(grid, tiles, common_edge, used_tiles: Set[int] = set(), positi
 def arrange_tile3(tiles: Sequence[Tile], common_edge: Mapping[str, Set]):
     """
     """
-    def get_neighbors(position):
-        yield (position[0], position[1]+1)
-        yield (position[0], position[1]-1)
-        yield (position[0]+1, position[1])
-        yield (position[0]-1, position[1])
-
     grid: Mapping[Tuple[int,int], TileOrientation] = dict()
     grid[(0,0)] = tiles[3461].variants[0]
     bfs_next_position = [(0,0)]
     while len(bfs_next_position) > 0:
         position = bfs_next_position.pop()
-        assert position in bfs_next_position
-        for neighbor in get_neighbors(position):
-            if neighbor not in bfs_next_position:
-                bfs_next_position.append(neighbor)
-                grid[neighbor] = common_edge
+        assert position in grid
+        tile = grid[position]
+
+        # This is NOT DRY
+        neighbor_position = (position[0], position[1]+1)
+        if neighbor_position not in grid:
+            neighbor_id = common_edge[tile.t] - set((tile.tile_id,))
+            if len(neighbor_id) == 1:
+                neighbor_id, = neighbor_id
+                neighbor = tiles[neighbor_id]
+                neighbor_tile = list(filter(lambda t: t.b == tile.t, neighbor.variants))
+                if len(neighbor_tile) == 1:
+                    grid[neighbor_position] = neighbor_tile[0]
+                    bfs_next_position.append(neighbor_position)
+
+        neighbor_position = (position[0], position[1]-1)
+        if neighbor_position not in grid:
+            neighbor_id = common_edge[tile.b] - set((tile.tile_id,))
+            if len(neighbor_id) == 1:
+                neighbor_id, = neighbor_id
+                neighbor = tiles[neighbor_id]
+                neighbor_tile = list(filter(lambda t: t.t == tile.b, neighbor.variants))
+                if len(neighbor_tile) == 1:
+                    grid[neighbor_position] = neighbor_tile[0]
+                    bfs_next_position.append(neighbor_position)
+
+        neighbor_position = (position[0]+1, position[1])
+        if neighbor_position not in grid:
+            neighbor_id = common_edge[tile.r] - set((tile.tile_id,))
+            if len(neighbor_id) == 1:
+                neighbor_id, = neighbor_id
+                neighbor = tiles[neighbor_id]
+                neighbor_tile = list(filter(lambda t: t.l == tile.r, neighbor.variants))
+                if len(neighbor_tile) == 1:
+                    grid[neighbor_position] = neighbor_tile[0]
+                    bfs_next_position.append(neighbor_position)
+
+        neighbor_position = (position[0]-1, position[1])
+        if neighbor_position not in grid:
+            neighbor_id = common_edge[tile.l] - set((tile.tile_id,))
+            if len(neighbor_id) == 1:
+                neighbor_id, = neighbor_id
+                neighbor = tiles[neighbor_id]
+                neighbor_tile = list(filter(lambda t: t.r == tile.l, neighbor.variants))
+                if len(neighbor_tile) == 1:
+                    grid[neighbor_position] = neighbor_tile[0]
+                    bfs_next_position.append(neighbor_position)
 
     assert len(set(tile.tile_id for tile in grid.values())) == 144
-    # TODO: recenter the grid
 
-    return grid
+    # TODO: recenter the grid
+    min_x, min_y = min(grid.keys())
+
+    return { (k[0] - min_x, k[1] - min_y): v for k, v in grid.items() }
+
+
+
+def find_common_edges(tiles: Mapping[int, Tile]) -> Mapping:
+    """
+    """
+    common_edge = defaultdict(set)
+    for tile_id, tile in tiles.items():
+        for variant in tile.variants:
+            data = (tile_id, variant.variant_id)
+            data = tile_id
+            common_edge[variant.t].add(data)
+            common_edge[variant.r].add(data)
+            common_edge[variant.b].add(data)
+            common_edge[variant.l].add(data)
+
+    print(*common_edge.items(), sep='\n')
+    print('{} tiles have at least an edge compatible with another tile'.format(len(list(filter(lambda t: len(t) > 1, common_edge.values())))))
+
+    return common_edge
 
 
 
@@ -278,15 +336,7 @@ def solve(tiles: Mapping) -> int:
     """
     Solve part 1 of the puzzle.
     """
-    common_edge = defaultdict(set)
-    for tile_id, tile in tiles.items():
-        for variant in tile.variants:
-            common_edge[variant.t].add(tile_id)
-            common_edge[variant.r].add(tile_id)
-            common_edge[variant.t].add(tile_id)
-            common_edge[variant.l].add(tile_id)
-    print(*common_edge.items(), sep='\n')
-    print('{} tiles have at least an edge compatible with another tile'.format(len(list(filter(lambda t: len(t) > 1, common_edge.values())))))
+    common_edge = find_common_edges(tiles)
 
     if False:
         # Can we find our corner tiles?
@@ -296,18 +346,35 @@ def solve(tiles: Mapping) -> int:
             if num_neighbor[2] == 4:
                 corner_tile_ids.add(tile_id)
 
-    # Find the tile layout.
-    grid = [ [None] * 12 for _ in range(12) ]
-    grid = arrange_tile(grid, tiles)
-    print(*grid, sep='\n')
+    if True:
+        # Can we utilize the common edges to create the grid?
+        grid = arrange_tile3(tiles, common_edge)
 
-    # Assemble the image from the tiles.
-    image = np.zeros((12*8, 12*8), np.int)
-    for y, line in enumerate(grid):
-        for x, cell in enumerate(line):
-            image[x*8:(x+1)*8, y*8:(y+1)*8] = cell.image[1:-1, 1:-1]
-    print(image)
-    np.savetxt('delme', image, fmt='%i')
+        # Assemble the image from the tiles.
+        size = 10
+        image = np.zeros((12*size, 12*size), np.int)
+        for y in range(12):
+            for x in range(12):
+                cell = grid[(x, y)]
+                #image[x*size:(x+1)*size, y*size:(y+1)*size] = cell.image[1:-1, 1:-1]
+                image[x*size:(x+1)*size, y*size:(y+1)*size] = cell.image
+        print(image)
+        np.savetxt('delme', image, fmt='%i')
+
+
+    if False:
+        # Find the tile layout.
+        grid = [ [None] * 12 for _ in range(12) ]
+        grid = arrange_tile(grid, tiles)
+        print(*grid, sep='\n')
+
+        # Assemble the image from the tiles.
+        image = np.zeros((12*8, 12*8), np.int)
+        for y, line in enumerate(grid):
+            for x, cell in enumerate(line):
+                image[x*8:(x+1)*8, y*8:(y+1)*8] = cell.image[1:-1, 1:-1]
+        print(image)
+        np.savetxt('delme', image, fmt='%i')
 
     # What is the orientation of the final image.
     for _image in generate_tile_variant(image):
@@ -335,5 +402,5 @@ if __name__ == '__main__':
     answer = solve(data)
 
     # 2424
-    assert answer == 2424
     print(f'Answer: {answer}')
+    assert answer == 2424
